@@ -1,6 +1,7 @@
 package fil.univ.model;
-import static model.Player.O;
-import static model.Player.X;
+
+import static fil.univ.model.Player.X;
+import static fil.univ.model.Player.O;
 
 public class Board {
 
