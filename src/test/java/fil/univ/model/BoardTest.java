@@ -162,4 +162,41 @@ public class BoardTest {
         assertNull(board.getWinner()); // Vérifie qu'il n'y a pas de gagnant après un match nul.
         assertTrue(board.isDraw()); // Vérifie que le jeu est reconnu comme un match nul.
     }
+
+    // Tests ajoutés pour améliorer le score de mutations
+
+    @Test
+    public void testStateWhenGameIsInProgress(){
+        // Tue les mutants qui forcent isFinishedMode() et isDraw() à retourner 'true'
+        board.mark(0, 0);
+        assertFalse(board.isFinishedMode());
+        assertFalse(board.isDraw());
+        assertTrue(board.isInProgressMode());
+    }
+
+    @Test
+    public void testStateWhenGameIsWon(){
+        // Tue le mutant qui force isInProgressMode() à retourner 'true'
+        board.mark(0, 0);
+        board.mark(1,0);
+        board.mark(0,1);
+        board.mark(1,1);
+        board.mark(0,2);
+
+        assertFalse(board.isInProgressMode());
+        assertFalse(board.isDraw());
+    }
+
+    @Test
+    public void tesWinOppositeDiagonalEndingOnTopRight(){
+        // Tue le mutant qui remplace (row + col == 2) par (row - col == 2)
+        // On fait gagner X sur la case (0, 2) au lieu de (2, 0)
+        board.mark(2, 0); // X
+        board.mark(0, 1); // O
+        board.mark(1, 1); // X
+        board.mark(1, 0); // O
+        board.mark(0, 2); // X gagne sur (0,2).
+
+        assertEquals(Player.X, board.getWinner());
+    }
 }
