@@ -1,5 +1,7 @@
 package fil.univ.model;
 
+import java.util.Arrays;
+
 import static fil.univ.model.Player.X;
 import static fil.univ.model.Player.O;
 
@@ -10,7 +12,7 @@ public class Board {
     private Player winner;
     private GameState state;
 	private Player currentTurn;
-	private enum GameState { IN_PROGRESS, FINISHED };
+	private enum GameState { IN_PROGRESS, FINISHED }
 
     public Board() {
         restart();
@@ -59,8 +61,8 @@ public class Board {
     }
 
     public boolean isBoardFull(){
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
+        for(int i = 0; i < this.cells.length; i++) {
+            for(int j = 0; j < this.cells[0].length; j++) {
                 if(cells[i][j].getValue() == null) {
                     return false;
                 }
@@ -103,8 +105,8 @@ public class Board {
 	}
 	
     private void clearCells() {
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
+        for(int i = 0; i < this.cells.length; i++) {
+            for(int j = 0; j < this.cells[0].length; j++) {
                 cells[i][j] = new Cell();
             }
         }
@@ -123,11 +125,24 @@ public class Board {
     }
 
     private boolean isOutOfBounds(int idx) {
-        return idx < 0 || idx > 2;
+        return idx < 0 || idx >= this.cells.length;
     }
 
     private boolean isCellValueAlreadySet(int row, int col) {
         return cells[row][col].getValue() != null;
+    }
+
+    private boolean isWinningInARow(Player player, int row) {
+        return Arrays.stream(cells[row]).allMatch(cell -> cell.getValue() == player);
+    }
+
+    private boolean isWinningInAColumn(Player player, int column) {
+        for(int i = 0; i < this.cells.length; i++) {
+            if(cells[i][column].getValue() != player) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -141,12 +156,8 @@ public class Board {
      */
     private boolean isWinningMoveByPlayer(Player player, int currentRow, int currentCol) {
 
-        return (cells[currentRow][0].getValue() == player         // 3-in-the-row
-                && cells[currentRow][1].getValue() == player
-                && cells[currentRow][2].getValue() == player
-                || cells[0][currentCol].getValue() == player      // 3-in-the-column
-                && cells[1][currentCol].getValue() == player
-                && cells[2][currentCol].getValue() == player
+        return (isWinningInARow(player, currentRow)
+                || isWinningInAColumn(player, currentCol)
                 || currentRow == currentCol            // 3-in-the-diagonal
                 && cells[0][0].getValue() == player
                 && cells[1][1].getValue() == player
