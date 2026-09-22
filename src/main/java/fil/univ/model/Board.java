@@ -7,14 +7,28 @@ import static fil.univ.model.Player.O;
 
 public class Board {
 
-    private Cell[][] cells = new Cell[3][3];
+    private Cell[][] cells;
+    private int width;
+    private int height;
+
+    private static final int DEFAULT_SIZE = 3;
 
     private Player winner;
     private GameState state;
 	private Player currentTurn;
 	private enum GameState { IN_PROGRESS, FINISHED }
 
-    public Board() {
+    public Board(int nbRows, int nbCols) {
+        this.width = nbRows;
+        this.height = nbCols;
+        cells = new Cell[nbRows][nbCols];
+        restart();
+    }
+
+    public Board(){
+        this.width = DEFAULT_SIZE;
+        this.height = DEFAULT_SIZE;
+        cells = new Cell[DEFAULT_SIZE][DEFAULT_SIZE];
         restart();
     }
 
@@ -61,8 +75,8 @@ public class Board {
     }
 
     public boolean isBoardFull(){
-        for(int i = 0; i < this.cells.length; i++) {
-            for(int j = 0; j < this.cells[0].length; j++) {
+        for(int i = 0; i < this.width; i++) {
+            for(int j = 0; j < this.height; j++) {
                 if(cells[i][j].getValue() == null) {
                     return false;
                 }
@@ -105,8 +119,8 @@ public class Board {
 	}
 	
     private void clearCells() {
-        for(int i = 0; i < this.cells.length; i++) {
-            for(int j = 0; j < this.cells[0].length; j++) {
+        for(int i = 0; i < this.width; i++) {
+            for(int j = 0; j < this.height; j++) {
                 cells[i][j] = new Cell();
             }
         }
@@ -137,12 +151,32 @@ public class Board {
     }
 
     private boolean isWinningInAColumn(Player player, int column) {
-        for(int i = 0; i < this.cells.length; i++) {
+        for(int i = 0; i < this.width; i++) {
             if(cells[i][column].getValue() != player) {
                 return false;
             }
         }
         return true;
+    }
+
+    private boolean isWinningInADiagonal(Player player) {
+        boolean result = true;
+        int idx = 0;
+        while(result && idx < this.width) {
+            result = this.cells[idx][idx].getValue() == player;
+            idx++;
+        }
+        return result;
+    }
+
+    private boolean isWinningInOppositeDiagonal(Player player) {
+        boolean result = true;
+        int idx = 0;
+        while(result && idx < this.width) {
+            result = this.cells[idx][this.height - idx - 1 ].getValue() == player;
+            idx++;
+        }
+        return result;
     }
 
 
@@ -158,14 +192,8 @@ public class Board {
 
         return (isWinningInARow(player, currentRow)
                 || isWinningInAColumn(player, currentCol)
-                || currentRow == currentCol            // 3-in-the-diagonal
-                && cells[0][0].getValue() == player
-                && cells[1][1].getValue() == player
-                && cells[2][2].getValue() == player
-                || currentRow + currentCol == 2    // 3-in-the-opposite-diagonal
-                && cells[0][2].getValue() == player
-                && cells[1][1].getValue() == player
-                && cells[2][0].getValue() == player);
+                || isWinningInADiagonal(player)
+                || isWinningInOppositeDiagonal(player));
     }
 
     private void flipCurrentTurn() {
