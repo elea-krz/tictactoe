@@ -23,11 +23,14 @@ public class Board {
         this.cols = nbCols;
         this.winningLength = winningLength;
         cells = new Cell[nbRows][nbCols];
-        restart();
     }
 
     public Board(){
         this(DEFAULT_SIZE,DEFAULT_SIZE,DEFAULT_SIZE);
+    }
+
+    public void start(){
+        restart();
     }
 
     /**
