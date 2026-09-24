@@ -1,6 +1,5 @@
 package fil.univ.model;
 
-import java.util.Arrays;
 
 import static fil.univ.model.Player.X;
 import static fil.univ.model.Player.O;
@@ -8,8 +7,9 @@ import static fil.univ.model.Player.O;
 public class Board {
 
     private Cell[][] cells;
-    private int width;
-    private int height;
+    private int rows;
+    private int cols;
+    private int winningLength;
 
     private static final int DEFAULT_SIZE = 3;
 
@@ -18,18 +18,16 @@ public class Board {
 	private Player currentTurn;
 	private enum GameState { IN_PROGRESS, FINISHED }
 
-    public Board(int nbRows, int nbCols) {
-        this.width = nbRows;
-        this.height = nbCols;
+    public Board(int nbRows, int nbCols, int winningLength) {
+        this.rows = nbRows;
+        this.cols = nbCols;
+        this.winningLength = winningLength;
         cells = new Cell[nbRows][nbCols];
         restart();
     }
 
     public Board(){
-        this.width = DEFAULT_SIZE;
-        this.height = DEFAULT_SIZE;
-        cells = new Cell[DEFAULT_SIZE][DEFAULT_SIZE];
-        restart();
+        this(DEFAULT_SIZE,DEFAULT_SIZE,DEFAULT_SIZE);
     }
 
     /**
@@ -75,14 +73,21 @@ public class Board {
     }
 
     public boolean isBoardFull(){
-        for(int i = 0; i < this.width; i++) {
-            for(int j = 0; j < this.height; j++) {
+        for(int i = 0; i < this.rows; i++) {
+            for(int j = 0; j < this.cols; j++) {
                 if(cells[i][j].getValue() == null) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    private Player getPlayerAt(int row, int col) {
+        if(row < 0 || col < 0 || row >= this.rows || col >= this.cols) {
+            return null;
+        }
+        return cells[row][col].getValue();
     }
 
     public Player getWinner() {
@@ -119,8 +124,8 @@ public class Board {
 	}
 	
     private void clearCells() {
-        for(int i = 0; i < this.width; i++) {
-            for(int j = 0; j < this.height; j++) {
+        for(int i = 0; i < this.rows; i++) {
+            for(int j = 0; j < this.cols; j++) {
                 cells[i][j] = new Cell();
             }
         }
@@ -130,7 +135,7 @@ public class Board {
         if( state == GameState.FINISHED ) {
             throw new IllegalArgumentException("Game is already finished.");
         }
-        if( isOutOfBounds(row) || isOutOfBounds(col) ) {
+        if( isRowOutOfBounds(row) || isColOutOfBounds(col) ) {
             throw new IllegalArgumentException("Coordinates are out of bounds.");
         }  
         if( isCellValueAlreadySet(row, col) ) {
@@ -138,47 +143,95 @@ public class Board {
         } 
     }
 
-    private boolean isOutOfBounds(int idx) {
-        return idx < 0 || idx >= this.cells.length;
+    private  boolean isRowOutOfBounds(int row) {
+        return row < 0 || row >= this.rows;
+    }
+
+    private  boolean isColOutOfBounds(int col) {
+        return col < 0 || col >= this.cols;
     }
 
     private boolean isCellValueAlreadySet(int row, int col) {
         return cells[row][col].getValue() != null;
     }
 
-    private boolean isWinningInARow(Player player, int row) {
-        return Arrays.stream(cells[row]).allMatch(cell -> cell.getValue() == player);
-    }
-
-    private boolean isWinningInAColumn(Player player, int column) {
-        for(int i = 0; i < this.width; i++) {
-            if(cells[i][column].getValue() != player) {
-                return false;
+    private boolean isWinningInARow(Player player, int row){
+        int consecutive = 0;
+        for(int col = 0; col < this.cols; col++) {
+            if(getPlayerAt(row,col) == player){
+                consecutive++;
+                if(consecutive >= winningLength) {
+                    return true;
+                }
+            }else{
+                consecutive = 0;
             }
         }
-        return true;
+        return false;
     }
 
-    private boolean isWinningInADiagonal(Player player) {
-        boolean result = true;
-        int idx = 0;
-        while(result && idx < this.width) {
-            result = this.cells[idx][idx].getValue() == player;
-            idx++;
+    private boolean isWinningInAColumn(Player player, int col){
+        int consecutive = 0;
+        for(int row = 0; row < this.rows; row++) {
+            if(getPlayerAt(row,col) == player) {
+                consecutive++;
+                if (consecutive >= winningLength) {
+                    return true;
+                }
+            }else {
+                consecutive = 0;
+            }
         }
-        return result;
+        return false;
     }
 
-    private boolean isWinningInOppositeDiagonal(Player player) {
-        boolean result = true;
-        int idx = 0;
-        while(result && idx < this.width) {
-            result = this.cells[idx][this.height - idx - 1 ].getValue() == player;
-            idx++;
+    private boolean isWinningInADiagonal(Player player, int row, int col){
+        int r = row;
+        int c = col;
+        while (r > 0 && c > 0){
+            r--;
+            c--;
         }
-        return result;
+
+        int consecutive = 0;
+        while (r < this.rows && c < this.cols){
+            if (getPlayerAt(r,c) == player) {
+                consecutive++;
+                if (consecutive >= winningLength) {
+                    return true;
+                }
+            }else{
+                consecutive = 0;
+            }
+            r++;
+            c++;
+        }
+        return false;
     }
 
+    private boolean isWinningInOppositeDiagonal(Player player, int row, int col){
+        int r = row;
+        int c = col;
+        while (r > 0 && c < this.cols - 1){
+            r--;
+            c++;
+        }
+
+        int consecutive = 0;
+        while (r < this.rows && c >= 0){
+            if (getPlayerAt(r,c) == player) {
+                consecutive++;
+                if (consecutive >= winningLength) {
+                    return true;
+                }
+            } else  {
+                consecutive = 0;
+            }
+            r++;
+            c--;
+        }
+        return false;
+    }
 
     /**
      * Algorithm adapted from http://www.ntu.edu.sg/home/ehchua/programming/java/JavaGame_TicTacToe.html
@@ -190,10 +243,10 @@ public class Board {
      */
     private boolean isWinningMoveByPlayer(Player player, int currentRow, int currentCol) {
 
-        return (isWinningInARow(player, currentRow)
-                || isWinningInAColumn(player, currentCol)
-                || isWinningInADiagonal(player)
-                || isWinningInOppositeDiagonal(player));
+        return isWinningInARow(player,currentRow)
+                || isWinningInAColumn(player,currentCol)
+                || isWinningInADiagonal(player,currentRow,currentCol)
+                || isWinningInOppositeDiagonal(player,currentRow,currentCol);
     }
 
     private void flipCurrentTurn() {
